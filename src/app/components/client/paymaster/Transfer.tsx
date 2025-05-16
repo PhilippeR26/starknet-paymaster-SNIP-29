@@ -40,11 +40,10 @@ export default function Transfer() {
       amount: 1n * 10n ** 5n,
     });
 
-  async function sendToken(gasTokenAddress: string, maxGasToken: BigNumberish) {
+  async function sendToken(gasTokenAddress: string) {
     console.log("sending...");
     const res = await myWalletAccount!.execute(callSendUSDC, {
       paymaster: {
-        maxEstimatedFeeInGasToken: maxGasToken,
         feeMode: { mode: "default", gasToken: gasTokenAddress }
         // feeMode:{mode:"sponsored"}
       }
@@ -54,7 +53,7 @@ export default function Transfer() {
     setTxH(res.transaction_hash);
   }
 
-  async function deployAccount(gasTokenAddress: string, maxGasToken: BigNumberish){
+  async function deployAccount(gasTokenAddress: string){
     console.log("deploying...");
     const deploymentData = await StarknetWalletObject?.request({ type: "wallet_deploymentData" });
     if(!deploymentData){
@@ -67,7 +66,6 @@ export default function Transfer() {
         sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
         version: deploymentData.version as 1,
       },
-      maxEstimatedFeeInGasToken: BigInt(maxGasToken) * 50n,
       feeMode: { mode: 'default', gasToken: gasTokenAddress },
     });
     if(!res) {
@@ -272,13 +270,11 @@ export default function Transfer() {
                       if(isDeployed){
                         if(estimatedFees[Number(selectedToken)] !== undefined){
                           sendToken(
-                            tokenList[Number(selectedToken!)].token_address,
-                            estimatedFees[Number(selectedToken)]!.suggested_max_fee_in_gas_token);
+                            tokenList[Number(selectedToken!)].token_address);
                         }
                       }else{
                         deployAccount(
-                          tokenList[Number(selectedToken!)].token_address,
-                          estimatedFees[Number(selectedToken)]!.suggested_max_fee_in_gas_token);
+                          tokenList[Number(selectedToken!)].token_address);
                       }
                     }}
                   >
