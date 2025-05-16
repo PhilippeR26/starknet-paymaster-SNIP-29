@@ -4,7 +4,7 @@ import purseLeft from "../../../public/Images/purse-wallet.svg";
 import arrow from "../../../public/Images/right-arrow.svg";
 import purseRight from "../../../public/Images/purse.png";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
-import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish } from "starknet";
+import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish, OutsideExecutionVersion } from "starknet";
 import { smallAddress } from "@/app/utils/smallAddress";
 import { addrETH, addrSTRK, addrSWAY, addrUSDCtestnet, targetAccountAddress } from "@/app/utils/constants";
 import GetBalance from "../Contract/GetBalance";
@@ -17,11 +17,12 @@ import { useGlobalContext } from "@/app/globalContext";
 
 
 export default function Transfer() {
-  const { chain, myWalletAccount } = useStoreWallet(state => state);
+  const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
   const [tokenList, setTokenList] = useState<TokenData[]>([]);
+  const [isDeployed, setIsDeployed] = useState<boolean>(false);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [tokenSymbol, setTokenSymbol] = useState<string[]>([]);
-  const [estimatedFees, setEstimatedFees] = useState<Array<PaymasterFeeEstimate>>([]);
+  const [estimatedFees, setEstimatedFees] = useState<(PaymasterFeeEstimate | undefined)[]>([]);
   const [usdcFees, setUsdcFees] = useState<PaymasterFeeEstimate | undefined>(undefined);
   const [ethFees, setEthFees] = useState<PaymasterFeeEstimate | undefined>(undefined);
   const myProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
@@ -53,6 +54,31 @@ export default function Transfer() {
     setTxH(res.transaction_hash);
   }
 
+  async function deployAccount(gasTokenAddress: string, maxGasToken: BigNumberish){
+    console.log("deploying...");
+    const deploymentData = await StarknetWalletObject?.request({ type: "wallet_deploymentData" });
+    if(!deploymentData){
+      console.log("No deployment data found");
+      return;
+    }
+    const res = await myWalletAccount?.executePaymasterTransaction([], {
+      deploymentData: {
+        ...deploymentData,
+        sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
+        version: deploymentData.version as 1,
+      },
+      maxEstimatedFeeInGasToken: BigInt(maxGasToken) * 50n,
+      feeMode: { mode: 'default', gasToken: gasTokenAddress },
+    });
+    if(!res) {
+      console.log("Error deploying account");
+      return;
+    }
+    console.log("Sent.");
+    console.log("res=", res);
+    setTxH(res.transaction_hash);
+  }
+
   function scroll() {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView(
@@ -69,28 +95,56 @@ export default function Transfer() {
     const getTokenList = async () => {
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
       console.log("tokens =", tokens);
-
-      const fees = await Promise.all(
-        tokens.map(async (tokenData: TokenData): Promise<PaymasterFeeEstimate> => {
-          return (
-            await myWalletAccount?.paymaster.buildTransaction({
-              type: 'invoke',
-              invoke: {
-                userAddress: myWalletAccount?.address ? myWalletAccount.address : "",
-                calls: [callSendUSDC],
-              }
-            }, {
-              version: '0x1',
-              feeMode: { mode: 'default', gasToken: tokenData.address },
-              // timeBounds?: PaymasterTimeBounds;
-            }))!.fee;
-        })
-      );
-      console.log("fees=", fees)
+      // Quick & dirty way to check if the account is deployed, we make a call to the contract, if it's not deployed, it will throw an error
+      const _isDeployed = await myWalletAccount?.getSnip9Version() !== OutsideExecutionVersion.UNSUPPORTED;
+      setIsDeployed(_isDeployed);
+      let fees: (PaymasterFeeEstimate | undefined)[] = [];
+      if(_isDeployed){
+        fees = await Promise.all(
+          tokens.map(async (tokenData: TokenData): Promise<PaymasterFeeEstimate | undefined> => {
+            return (
+              await myWalletAccount?.estimatePaymasterTransactionFee([callSendUSDC], {
+                feeMode: { mode: 'default', gasToken: tokenData.token_address },
+              }).catch((e) =>  {
+                // New error is thrown here -> "execution error Not enough balance for gas token" 
+                console.log(e)
+                return undefined;
+              })
+            );
+          })
+        );
+      }else{
+        const deploymentData = await StarknetWalletObject?.request({ type: "wallet_deploymentData" });
+        if(!deploymentData){
+          console.log("No deployment data found");
+          return;
+        }
+        console.log("deploymentData=", deploymentData);
+        fees = await Promise.all(
+          tokens.map(async (tokenData: TokenData): Promise<PaymasterFeeEstimate | undefined> => {
+            return (
+               (myWalletAccount?.estimatePaymasterTransactionFee([], {
+                deploymentData: {
+                  ...deploymentData,
+                  // TODO: here there is an error if not hex, this sigdata is only used in Braavos wallet
+                  sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
+                  // TODO: Will probably be removed
+                  version: deploymentData.version as 1,
+                },
+                feeMode: { mode: 'default', gasToken: tokenData.token_address },
+              }).catch((e) =>  {
+                // New error is thrown here -> "execution error Not enough balance for gas token" 
+                console.log(e)
+                return undefined;
+              })));
+          })
+        );
+      }
+      console.log("fees=", fees);
 
       const symbols: string[] = await Promise.all(
         tokens.map(async (tokenData: TokenData): Promise<string> => {
-          const contract = new Contract(erc20Abi, tokenData.address, myWalletAccount);
+          const contract = new Contract(erc20Abi, tokenData.token_address, myWalletAccount);
           return (
             shortString.decodeShortString(await contract.symbol())
           )
@@ -197,7 +251,7 @@ export default function Transfer() {
                         <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
                         <RadioGroup.ItemText
                         >
-                          {buildFee(token.address, estimatedFees[index], myProviderIndex, tokenSymbol[index], token.decimals)}
+                          {buildFee(token.token_address, estimatedFees[index], myProviderIndex, tokenSymbol[index], token.decimals)}
 
                         </RadioGroup.ItemText>
                       </RadioGroup.Item>
@@ -211,15 +265,24 @@ export default function Transfer() {
                     mt={3}
                     px={5}
                     hidden={selectedToken === null}
+                    disabled={estimatedFees[Number(selectedToken)] === undefined}
                     onClick={async () => {
                       setTxH("");
                       setTxResult(false);
-                      sendToken(
-                        tokenList[Number(selectedToken!)].address,
-                        estimatedFees[Number(selectedToken)].suggested_max_fee_in_gas_token);
+                      if(isDeployed){
+                        if(estimatedFees[Number(selectedToken)] !== undefined){
+                          sendToken(
+                            tokenList[Number(selectedToken!)].token_address,
+                            estimatedFees[Number(selectedToken)]!.suggested_max_fee_in_gas_token);
+                        }
+                      }else{
+                        deployAccount(
+                          tokenList[Number(selectedToken!)].token_address,
+                          estimatedFees[Number(selectedToken)]!.suggested_max_fee_in_gas_token);
+                      }
                     }}
                   >
-                    Proceed...
+                    {isDeployed ? "Send..." : "Deploy..."}
                   </Button>
                 </Center>
               </Box>

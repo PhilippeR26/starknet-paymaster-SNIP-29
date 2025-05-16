@@ -53,7 +53,7 @@ export default function SelectWallet() {
         console.log("Trying to connect wallet=", selectedWallet);
         setMyWallet(selectedWallet); // zustand
         const paymasterRpc = new PaymasterRpc({ default: true });
-        setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[2], selectedWallet,undefined, undefined, paymasterRpc));
+        setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[2], selectedWallet,undefined, paymasterRpc));
 
         const result = await wallet.requestAccounts(selectedWallet);
         if (typeof (result) == "string") {
