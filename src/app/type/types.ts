@@ -1,3 +1,5 @@
+import type { PaymasterFeeEstimate } from "starknet"
+
 export interface WatchAssetParameters {
     type: "ERC20" // The asset's interface, e.g. 'ERC20'
     options: {
@@ -30,4 +32,13 @@ export interface AddStarknetChainParameters {
     iconUrls?: string[] // Currently ignored.
 }
 
-
+export type EstimatePaymasterFeesResponse = PaymasterFeeEstimate | undefined;
+export type TokenDataNecessary = {
+    symbol: string,
+    address: string,
+    decimals: number
+};
+export type DataForFeesList = {
+    feeData: PaymasterFeeEstimate,
+    tokenData: TokenDataNecessary
+}

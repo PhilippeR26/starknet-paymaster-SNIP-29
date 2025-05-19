@@ -13,10 +13,10 @@ export default async function Page() {
     return (
             <div>
                 <p className={styles.bgText}>
-                    Test SNIP-29 paymaster
+                    Demo SNIP-29 paymaster
                 </p>
                    <Center> 
-                     get-starknet v4.0.7 with starknet.js v6.24.0 + experimental
+                     get-starknet v4.0.7 with starknet.js v7.3.0
                 </Center>
                 <Center>
                     <Image src={starknetjsImg} alt='starknet.js' width={150} />
