@@ -244,6 +244,7 @@ export default function Transfer() {
                       <RadioGroup.Item
                         key={index}
                         value={index.toString()}
+                        disabled={!estimatedFees[index]}
                       >
                         <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
                         <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
