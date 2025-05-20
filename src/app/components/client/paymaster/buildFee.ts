@@ -1,5 +1,5 @@
 import { myFrontendProviders } from "@/app/utils/constants";
-import type { PaymasterFeeEstimate } from "../../../../../../../../home/edmond/Documents/starknet/starknet.js/dist";
+import type { PaymasterFeeEstimate } from "starknet";
 import { Contract } from "starknet";
 import { erc20Abi } from "@/app/contracts/abis/ERC20abi";
 import { formatBalance } from "@/app/utils/formatBalance";
