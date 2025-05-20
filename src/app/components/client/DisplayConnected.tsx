@@ -6,6 +6,7 @@ import SelectWallet from "./ConnectWallet/SelectWallet";
 import Transfer from "./paymaster/Transfer";
 import { smallAddress } from "@/app/utils/smallAddress";
 import TrackBlocks from "./Block/TrackBlocks";
+import CheckAccount from "./paymaster/CheckAccount";
 
 export function DisplayConnected() {
     const {
@@ -59,7 +60,7 @@ export function DisplayConnected() {
                     <DisplayEvents></DisplayEvents>
                     <PlayWithCairo1></PlayWithCairo1> */}
                     <TrackBlocks></TrackBlocks>
-                    <Transfer></Transfer>
+                    <CheckAccount></CheckAccount>
                 </>
             )
             }

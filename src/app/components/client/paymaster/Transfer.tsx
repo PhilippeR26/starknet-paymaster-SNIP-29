@@ -1,10 +1,10 @@
-import { Box, Center, HStack, RadioGroup, VStack, Text, Button, Grid, GridItem, Group, Stack } from "@chakra-ui/react";
+import { Box, Center, HStack, RadioGroup, VStack, Text, Button, Grid, GridItem, Group, Stack, Spinner } from "@chakra-ui/react";
 import Image from 'next/image'
 import purseLeft from "../../../public/Images/purse-wallet.svg";
 import arrow from "../../../public/Images/right-arrow.svg";
 import purseRight from "../../../public/Images/purse.png";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
-import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish } from "starknet";
+import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish, OutsideExecutionVersion, type Call } from "starknet";
 import { smallAddress } from "@/app/utils/smallAddress";
 import { addrETH, addrSTRK, addrSWAY, addrUSDCtestnet, targetAccountAddress } from "@/app/utils/constants";
 import GetBalance from "../Contract/GetBalance";
@@ -18,17 +18,15 @@ import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary
 
 
 export default function Transfer() {
-  const { chain, myWalletAccount } = useStoreWallet(state => state);
+  const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
-
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
   const myProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
+  const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
   const { txResult, setTxResult } = useGlobalContext(state => state);
   const [txH, setTxH] = useState<string>("");
   const scrollRef = useRef<null | HTMLDivElement>(null);
 
-
-  const isValidNetwork = chain === constants.StarknetChainId.SN_SEPOLIA ? true : false;
 
   const erc20contract = new Contract(erc20Abi, addrUSDCtestnet, myWalletAccount);
   const callSendUSDC = erc20contract.populate("transfer",
@@ -37,11 +35,10 @@ export default function Transfer() {
       amount: 1n * 10n ** 5n,
     });
 
-  async function sendToken(gasTokenAddress: string, maxGasToken: BigNumberish) {
+  async function sendToken(gasTokenAddress: string) {
     console.log("sending...");
     const res = await myWalletAccount!.execute(callSendUSDC, {
       paymaster: {
-        maxEstimatedFeeInGasToken: maxGasToken,
         feeMode: { mode: "default", gasToken: gasTokenAddress }
         // feeMode:{mode:"sponsored"}
       }
@@ -81,7 +78,7 @@ export default function Transfer() {
                 }
               }, {
                 version: '0x1',
-                feeMode: { mode: 'default', gasToken: tokenData.address },
+                feeMode: { mode: 'default', gasToken: tokenData.token_address },
                 // timeBounds?: PaymasterTimeBounds;
               }))!.fee;
               return build;
@@ -99,7 +96,9 @@ export default function Transfer() {
       const symbols: string[] = await Promise.all(
         tokens.map(
           async (tokenData: TokenData): Promise<string> => {
-            const contract = new Contract(erc20Abi, tokenData.address, myWalletAccount);
+
+            const contract = new Contract(erc20Abi, tokenData.token_address, myWalletAccount);
+
             return (
               shortString.decodeShortString(await contract.symbol())
             )
@@ -113,45 +112,43 @@ export default function Transfer() {
             return undefined;
           }
 
+
           return {
             feeData: fee,
             tokenData: {
               symbol: symbols[index],
-              address: tokens[index].address,
+              address: tokens[index].token_address,
               decimals: tokens[index].decimals
             }
           }
         }
       ).filter((fee) => fee !== undefined); // remove tokens that can't be used to pay fees
+      console.log("answersFees=", answersFees);
+      setAnswersFees(answersFees);
+      setFeesAvailable(true);
 
-  setAnswersFees(answersFees);
-};
-getTokenList();
+      console.log("symbol=", symbols)
+      // setTokenSymbols(symbols);
+      // setEstimatedFees(fees);
+      // setTokenList(tokens);
+    };
+    getTokenList();
   }
     , []
   );
 
-// always see bottom of DAPP
-useEffect(() => {
-  console.log("scroll1....");
-  scroll();
-},
-  [txResult, selectedToken])
+  // 
+  // always see bottom of DAPP
+  useEffect(() => {
+    console.log("scroll1....");
+    scroll();
+  },
+    [txResult, selectedToken])
 
 
-return (
-  <>
-    <Center>
-      Network selected : {shortString.decodeShortString(chain)}
-    </Center>
-    <Center>
-      {!isValidNetwork &&
-        <p style={{ color: "red" }}>
-          Please connect to Sepolia Testnet network
-        </p>
-      }
-    </Center>
-    {isValidNetwork &&
+  return (
+    <>
+
       <Box ref={scrollRef}>
         <Center>
           <HStack>
@@ -201,41 +198,46 @@ return (
             </Center>
             <Box w={200}  >
               <Center>
-                <Text 
-                textDecoration={"underline"} 
-                fontSize={16} 
-                fontWeight={"bold"}
-                mb={2}
-                >
+                <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
                   Choose fees:<br></br>
                 </Text>
               </Center>
-              <RadioGroup.Root
-                defaultValue={"0"}
-                value={selectedToken}
-                onValueChange={(e) => setSelectedToken(e.value)}
-                colorPalette={"black"}
-                size={"sm"}
-                ml={5}
-              >
-                <Stack>
-                  {answersFees.map((token:DataForFeesList, index: number) => (
-                    <RadioGroup.Item
-                      key={index}
-                      value={index.toString()}
-                      pl={5}
-                    >
-                      <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
-                      <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
-                      <RadioGroup.ItemText
+              {isFeesAvailable ? (<>
+                <RadioGroup.Root
+                  defaultValue={"0"}
+                  value={selectedToken}
+                  onValueChange={(e) => setSelectedToken(e.value)}
+                  colorPalette={"black"}
+                  size={"sm"}
+                >
+                  <Stack>
+                    {answersFees.map((token: DataForFeesList, index: number) => (
+                      <RadioGroup.Item
+                        key={index}
+                        value={index.toString()}
+                        pl={5}
                       >
-                        {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
+                        <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
+                        <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
+                        <RadioGroup.ItemText
+                        >
+                          {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
 
-                      </RadioGroup.ItemText>
-                    </RadioGroup.Item>
-                  ))}
-                </Stack>
-              </RadioGroup.Root>
+                        </RadioGroup.ItemText>
+                      </RadioGroup.Item>
+                    ))}
+                  </Stack>
+                </RadioGroup.Root>
+              </>
+              ) : (
+                <>
+                  <Center>
+                    <Spinner size="xl" color="blue.solid" />
+                  </Center>
+                </>
+              )
+              }
+
               <Center>
                 <Button
                   variant="surface"
@@ -247,8 +249,7 @@ return (
                     setTxH("");
                     setTxResult(false);
                     sendToken(
-                      answersFees[Number(selectedToken!)].tokenData.address,
-                      answersFees[Number(selectedToken)].feeData.suggested_max_fee_in_gas_token);
+                      answersFees[Number(selectedToken!)].tokenData.address);
                   }}
                 >
                   Proceed...
@@ -259,6 +260,8 @@ return (
               Receive 0.1 USDC
             </Center>
           </Group>
+
+
         </Center>
         {txH !== "" ?
           (
@@ -270,7 +273,6 @@ return (
           )
         }
       </Box>
-    }
-  </>
-)
+    </>
+  )
 }
