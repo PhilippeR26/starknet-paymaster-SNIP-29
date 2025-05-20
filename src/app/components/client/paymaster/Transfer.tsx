@@ -70,9 +70,17 @@ export default function Transfer() {
           async (tokenData: TokenData): Promise<EstimatePaymasterFeesResponse> => {
 
             try {
-              const build = await myWalletAccount?.estimatePaymasterTransactionFee([callSendUSDC], {
-                feeMode: { mode: 'default', gasToken: tokenData.token_address },
-              })
+              const build = (await myWalletAccount?.paymaster.buildTransaction({
+                type: 'invoke',
+                invoke: {
+                  userAddress: myWalletAccount?.address ? myWalletAccount.address : "",
+                  calls: [callSendUSDC],
+                }
+              }, {
+                version: '0x1',
+                feeMode: { mode: 'default', gasToken: tokenData.address },
+                // timeBounds?: PaymasterTimeBounds;
+              }))!.fee;
               return build;
 
             } catch {
@@ -82,12 +90,15 @@ export default function Transfer() {
           }
         )
       );
+
       console.log("fees=", fees)
 
       const symbols: string[] = await Promise.all(
         tokens.map(
           async (tokenData: TokenData): Promise<string> => {
+
             const contract = new Contract(erc20Abi, tokenData.token_address, myWalletAccount);
+
             return (
               shortString.decodeShortString(await contract.symbol())
             )
@@ -100,6 +111,7 @@ export default function Transfer() {
           if (fee === undefined) {
             return undefined;
           }
+
 
           return {
             feeData: fee,
@@ -136,6 +148,7 @@ export default function Transfer() {
 
   return (
     <>
+
       <Box ref={scrollRef}>
         <Center>
           <HStack>
@@ -247,6 +260,7 @@ export default function Transfer() {
               Receive 0.1 USDC
             </Center>
           </Group>
+
 
         </Center>
         {txH !== "" ?
