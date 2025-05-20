@@ -30,11 +30,12 @@ export default function CheckAccount() {
             try {
                 const myCall: Call = {
                     contractAddress: myWalletAccount?.address!,
-                    entrypoint: "get_public_key",
-                    calldata: []
+                    entrypoint: "supports_interface",
+                    calldata: [0]
                 };
+                console.log("myCall =", myCall);
                 const res = await myWalletAccount?.callContract(myCall);
-                console.log("get_public_key =", res);
+                console.log("supports_interface =", res);
                 _isDeployed = true;
             } catch {
                 _isDeployed = false;

@@ -18,6 +18,8 @@ import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary
 
 
 export default function Transfer() {
+  const UsdcAmount = 1n * 10n ** 5n;
+
   const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
@@ -26,13 +28,14 @@ export default function Transfer() {
   const { txResult, setTxResult } = useGlobalContext(state => state);
   const [txH, setTxH] = useState<string>("");
   const scrollRef = useRef<null | HTMLDivElement>(null);
+  const [isAccountFunded, setIsAccountFunded] = useState<boolean>(false);
 
 
-  const erc20contract = new Contract(erc20Abi, addrUSDCtestnet, myWalletAccount);
-  const callSendUSDC = erc20contract.populate("transfer",
+  const UsdcContract = new Contract(erc20Abi, addrUSDCtestnet, myWalletAccount);
+  const callSendUSDC = UsdcContract.populate("transfer",
     {
       recipient: targetAccountAddress,
-      amount: 1n * 10n ** 5n,
+      amount: UsdcAmount,
     });
 
   async function sendToken(gasTokenAddress: string) {
@@ -137,6 +140,25 @@ export default function Transfer() {
     , []
   );
 
+  // account needs at least 0.1 USDC for the transfer
+  useEffect(() => {
+    const checkFunded = async () => {
+      UsdcContract.balanceOf(myWalletAccount?.address)
+        .then((resp: any) => {
+          const result = BigInt(resp);
+          if (resp >= UsdcAmount) {
+            console.log("account is funded");
+            setIsAccountFunded(true);
+          }
+        }
+        )
+        .catch((e: any) => { console.log("error balanceOf=", e) });
+    };
+    checkFunded();
+  }
+    , []
+  );
+
   // 
   // always see bottom of DAPP
   useEffect(() => {
@@ -184,85 +206,100 @@ export default function Transfer() {
             </VStack>
           </HStack>
         </Center>
-        <Center>
-          <Group
-            pb={3}
-            pt={2}
-            bg={"lightslategray"}
-            borderRadius={10}
-            mt={8}
-            mb={2}
-          >
-            <Center w={150} fontWeight={"bold"} fontSize={16}>
-              Send 0.1 USDC
-            </Center>
-            <Box w={200}  >
-              <Center>
-                <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
-                  Choose fees:<br></br>
-                </Text>
+        {isAccountFunded ? (
+          <Center>
+            <Group
+              pb={3}
+              pt={2}
+              bg={"lightslategray"}
+              borderRadius={10}
+              mt={8}
+              mb={2}
+            >
+              <Center w={150} fontWeight={"bold"} fontSize={16}>
+                Send 0.1 USDC
               </Center>
-              {isFeesAvailable ? (<>
-                <RadioGroup.Root
-                  defaultValue={"0"}
-                  value={selectedToken}
-                  onValueChange={(e) => setSelectedToken(e.value)}
-                  colorPalette={"black"}
-                  size={"sm"}
-                >
-                  <Stack>
-                    {answersFees.map((token: DataForFeesList, index: number) => (
-                      <RadioGroup.Item
-                        key={index}
-                        value={index.toString()}
-                        pl={5}
+              <Box w={200}  >
+                <Center>
+                  <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
+                    Choose fees:<br></br>
+                  </Text>
+                </Center>
+                {isFeesAvailable ? (
+                  answersFees.length > 0 ? (
+                    <>
+                      <RadioGroup.Root
+                        defaultValue={"0"}
+                        value={selectedToken}
+                        onValueChange={(e) => setSelectedToken(e.value)}
+                        colorPalette={"black"}
+                        size={"sm"}
                       >
-                        <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
-                        <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
-                        <RadioGroup.ItemText
-                        >
-                          {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
+                        <Stack>
+                          {answersFees.map((token: DataForFeesList, index: number) => (
+                            <RadioGroup.Item
+                              key={index}
+                              value={index.toString()}
+                              pl={5}
+                            >
+                              <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
+                              <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
+                              <RadioGroup.ItemText
+                              >
+                                {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
 
-                        </RadioGroup.ItemText>
-                      </RadioGroup.Item>
-                    ))}
-                  </Stack>
-                </RadioGroup.Root>
-              </>
-              ) : (
-                <>
-                  <Center>
-                    <Spinner size="xl" color="blue.solid" />
-                  </Center>
-                </>
-              )
-              }
+                              </RadioGroup.ItemText>
+                            </RadioGroup.Item>
+                          ))}
+                        </Stack>
+                      </RadioGroup.Root>
+                    </>
+                  ) : (
+                    <Center fontSize='lg' color='orange'>
+                      No fee token available
+                    </Center>
+                  )
+                ) : (
+                  <>
+                    <Center>
+                      <Spinner size="xl" color="blue.solid" />
+                    </Center>
+                  </>
+                )
+                }
 
-              <Center>
-                <Button
-                  variant="surface"
-                  fontWeight='bold'
-                  mt={3}
-                  px={5}
-                  hidden={selectedToken === null}
-                  onClick={async () => {
-                    setTxH("");
-                    setTxResult(false);
-                    sendToken(
-                      answersFees[Number(selectedToken!)].tokenData.address);
-                  }}
-                >
-                  Proceed...
-                </Button>
+                <Center>
+                  <Button
+                    variant="surface"
+                    fontWeight='bold'
+                    mt={3}
+                    px={5}
+                    hidden={selectedToken === null}
+                    onClick={async () => {
+                      setTxH("");
+                      setTxResult(false);
+                      sendToken(
+                        answersFees[Number(selectedToken!)].tokenData.address);
+                    }}
+                  >
+                    Proceed...
+                  </Button>
+                </Center>
+              </Box>
+              <Center w={150} fontWeight={"bold"} fontSize={16}>
+                Receive 0.1 USDC
               </Center>
-            </Box>
-            <Center w={150} fontWeight={"bold"} fontSize={16}>
-              Receive 0.1 USDC
-            </Center>
-          </Group>
+            </Group>
 
 
-        </Center>
+          </Center>
+        ) : (
+          <Center fontSize='lg' color='red.500' pt={6}>
+            Account needs to be funded with at least 0.1 USDC
+          </Center>
+        )
+        }
+
         {txH !== "" ?
           (
             <TransactionStatus transactionHash={txH}></TransactionStatus>
