@@ -11,11 +11,12 @@ This small project demonstrates how to create a DAPP to use SNIP-29 paymaster.
 It allows you to use several tokens to pay the Starknet fees: STRK, ETH, USDC, SWAY. 
 
 > [!NOTE]
-> For example, if you have some USDC and no STRK in your wallet, you can anyway proceed a transfer, using some USDC to pay the fees.
+> For example, if you have some USDC and no STRK in your wallet, you can anyway proceed a transfer, using some of these USDC to pay the fees.
 > 
 > Use an account in Sepolia Testnet network.
-> 
-> In this demo, you need some STRK, ETH, USDC & SWAY in this account to be able to execute a transfer.
+
+> [!IMPORTANT]
+> In this demo, you need at least 0.1 USDC in your account to be able to execute a transfer.
 
 Analyze the code to see how to create a such DAPP (start [here](src/app/page.tsx))  
 
