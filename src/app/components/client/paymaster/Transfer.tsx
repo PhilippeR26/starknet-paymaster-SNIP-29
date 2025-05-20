@@ -170,7 +170,6 @@ export default function Transfer() {
 
   return (
     <>
-
       <Box ref={scrollRef}>
         <Center>
           <HStack>
@@ -185,7 +184,6 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrETH} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
                 <GetBalance tokenAddress={addrUSDCtestnet} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
                 <GetBalance tokenAddress={addrSWAY} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
-
               </VStack>
             </VStack>
             <Center w={200}>
@@ -267,7 +265,6 @@ export default function Transfer() {
                   </>
                 )
                 }
-
                 <Center>
                   <Button
                     variant="surface"
@@ -290,8 +287,6 @@ export default function Transfer() {
                 Receive 0.1 USDC
               </Center>
             </Group>
-
-
           </Center>
         ) : (
           <Center fontSize='lg' color='red.500' pt={6}>
@@ -299,7 +294,6 @@ export default function Transfer() {
           </Center>
         )
         }
-
         {txH !== "" ?
           (
             <TransactionStatus transactionHash={txH}></TransactionStatus>

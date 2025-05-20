@@ -1,7 +1,7 @@
 import { erc20Abi } from "@/app/contracts/abis/ERC20abi";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
 import { useEffect, useRef, useState } from "react";
-import { type TokenData, Contract, shortString, type PaymasterFeeEstimate } from "starknet";
+import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, wallet } from "starknet";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Box, Button, Center, Group, HStack, RadioGroup, Spinner, Stack, VStack, Text } from "@chakra-ui/react";
 import { useGlobalContext } from "@/app/globalContext";
@@ -25,49 +25,53 @@ export default function DeployAccount() {
 
   async function paymasterDeployAccount(gasTokenAddress: string) {
     console.log("deploying...");
-    const deploymentData = await StarknetWalletObject?.request({ type: "wallet_deploymentData" });
+    const deploymentData = await wallet.deploymentData(StarknetWalletObject!);
+    console.log("deploymentData in deploy =", deploymentData);
     if (!deploymentData) {
       console.log("No deployment data found");
       return;
     }
-    // const res = await myWalletAccount?.executePaymasterTransaction([], {
-    //   deploymentData: {
-    //     ...deploymentData,
-    //     sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
-    //     version: deploymentData.version as 1,
-    //   },
-    //   feeMode: { mode: 'default', gasToken: gasTokenAddress },
-    // });
-    // if (!res) {
-    //   console.log("Error deploying account");
-    //   return;
-    // }
+    const res = await myWalletAccount?.executePaymasterTransaction([], {
+      deploymentData: {
+        ...deploymentData,
+        sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
+        version: deploymentData.version as 1,
+      },
+      feeMode: { mode: 'default', gasToken: gasTokenAddress },
+    });
+    if (!res) {
+      console.log("Error deploying account");
+      return;
+    }
     console.log("Sent.");
-    // console.log("res=", res);
-    // setTxH(res.transaction_hash);
+    console.log("res=", res);
+    setTxH(res.transaction_hash);
   }
 
   useEffect(() => {
     const getTokenList = async () => {
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
-      console.log("tokens =", tokens);
-      const deploymentData = await StarknetWalletObject?.request({ type: "wallet_deploymentData" });
+      console.log("tokens available for deploy =", tokens);
+      const deploymentData = await wallet.deploymentData(StarknetWalletObject!);
       if (!deploymentData) {
         console.log("No deployment data found");
         return;
       }
+      console.log("deploymentData in estimate=", deploymentData);
 
       const fees: EstimatePaymasterFeesResponse[] = await Promise.all(
         tokens.map(
           async (tokenData: TokenData): Promise<EstimatePaymasterFeesResponse> => {
 
             try {
+              const parameters = {
+                ...deploymentData,
+                sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
+                version: deploymentData.version as 1,
+              };
+              console.log("parameters in estimate=", parameters);
               const build = await myWalletAccount?.estimatePaymasterTransactionFee([], {
-                deploymentData: {
-                  ...deploymentData,
-                  sigdata: deploymentData.sigdata?.map((sig: any) => sig.startsWith("0x") ? sig : `0x${sig}`),
-                  version: deploymentData.version as 1,
-                },
+                deploymentData: parameters,
                 feeMode: { mode: 'default', gasToken: tokenData.token_address },
               })
               return build;
@@ -79,7 +83,7 @@ export default function DeployAccount() {
           }
         )
       );
-      console.log("fees=", fees)
+      console.log("fees in estimate=", fees)
 
       const symbols: string[] = await Promise.all(
         tokens.map(
