@@ -16,7 +16,8 @@ It allows you to use several tokens to pay the Starknet fees: STRK, ETH, USDC, S
 > Use an account in Sepolia Testnet network.
 
 > [!IMPORTANT]
-> In this demo, you need at least 0.1 USDC in your account to be able to execute a transfer.
+> In this demo, you need at least 0.1 USDC in your account to be able to execute a transfer.  
+> To get USDC in testnet, one way is to connect a Testnet account to: https://app.ekubo.org/?outputCurrency=USDC&amount=1&inputCurrency=STRK
 
 Analyze the code to see how to create a such DAPP (start [here](src/app/page.tsx))  
 
