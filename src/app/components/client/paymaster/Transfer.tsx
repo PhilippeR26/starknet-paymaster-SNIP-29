@@ -78,7 +78,7 @@ export default function Transfer() {
                 }
               }, {
                 version: '0x1',
-                feeMode: { mode: 'default', gasToken: tokenData.address },
+                feeMode: { mode: 'default', gasToken: tokenData.token_address },
                 // timeBounds?: PaymasterTimeBounds;
               }))!.fee;
               return build;
