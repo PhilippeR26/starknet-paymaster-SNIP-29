@@ -11,13 +11,15 @@ import GetBalance from "../Contract/GetBalance";
 import TransactionStatus from "../Transaction/TransactionStatus";
 import { buildFee } from "./buildFee";
 import { useFrontendProvider } from "../provider/providerContext";
+import Transfer from "./Transfer";
 
 export default function DeployAccount() {
   const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
   const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
   const { txResult, setTxResult } = useGlobalContext(state => state);
-  const { transferRequested, setTransferRequested } = useGlobalContext(state => state);
+   const [goToTransfer, setGotoTransfer]  = useState<boolean>(false);
+  const { isReadyToTransfer, setIsReadyToTransfer } = useGlobalContext(state => state);
   const [txH, setTxH] = useState<string>("");
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const scrollRef = useRef<null | HTMLDivElement>(null);
@@ -48,6 +50,7 @@ export default function DeployAccount() {
     setTxH(res.transaction_hash);
   }
 
+  // get estimated fees for deploy account
   useEffect(() => {
     const getTokenList = async () => {
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
@@ -116,10 +119,7 @@ export default function DeployAccount() {
       setAnswersFees(answersFees);
       setFeesAvailable(true);
 
-      console.log("symbol=", symbols)
-      // setTokenSymbols(symbols);
-      // setEstimatedFees(fees);
-      // setTokenList(tokens);
+      console.log("symbols =", symbols)
     };
     getTokenList();
   }
@@ -137,8 +137,8 @@ export default function DeployAccount() {
 
 
   return (<>
+  { !goToTransfer ? (
     <Box ref={scrollRef}>
-
       <Center>
         <Group
           pb={3}
@@ -148,7 +148,6 @@ export default function DeployAccount() {
           mt={8}
           mb={2}
         >
-
           <Box w={200}  >
             <Center>
               <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
@@ -190,7 +189,6 @@ export default function DeployAccount() {
               </>
             )
             }
-
             <Center>
               <Button
                 variant="surface"
@@ -222,9 +220,10 @@ export default function DeployAccount() {
               fontWeight='bold'
               mt={3}
               px={5}
+              hidden={!isReadyToTransfer}
               onClick={
                 () => {
-                  setTransferRequested(true);
+                  setGotoTransfer(true);
                 }
               }
             >
@@ -238,5 +237,9 @@ export default function DeployAccount() {
         )
       }
     </Box>
+  ):(
+    <Transfer></Transfer>
+  )}
+    
   </>)
 }

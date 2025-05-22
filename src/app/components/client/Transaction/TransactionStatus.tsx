@@ -22,7 +22,11 @@ export default function TransactionStatus({ transactionHash }: Props) {
     const blockFromContext = useStoreBlock(state => state.dataBlock);
     const setTxResult = useGlobalContext(state => state.setTxResult);
 
+    // global context
+    const { isReadyToTransfer, setIsReadyToTransfer } = useGlobalContext(state => state);
+
     // component context
+    
     const [txStatus, setTxStatus] = useState<string>(waiting);
 
     useEffect(() => {
@@ -50,6 +54,7 @@ export default function TransactionStatus({ transactionHash }: Props) {
                 });
                 console.log("TxFinality =", finality);
                 setTxStatus(txR.statusReceipt + " " + finality);
+                setIsReadyToTransfer(true);
             })
             .catch((e: any) => {
                 setTxStatus(ErrorMessage);

@@ -12,7 +12,7 @@ export default function CheckAccount() {
     const [isDeployed, setIsDeployed] = useState<boolean>(false);
     const [isSNIP9, setIsSNIP9] = useState<boolean>(false);
     const [isProcessing, setProcessing] = useState<boolean>(true);
-    const { transferRequested, setTransferRequested } = useGlobalContext(state => state);
+    const { isReadyToTransfer: transferRequested, setIsReadyToTransfer: setTransferRequested } = useGlobalContext(state => state);
 
     const isValidNetwork = chain === constants.StarknetChainId.SN_SEPOLIA ? true : false;
 
