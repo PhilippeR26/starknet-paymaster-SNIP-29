@@ -12,6 +12,7 @@ import TransactionStatus from "../Transaction/TransactionStatus";
 import { buildFee } from "./buildFee";
 import { useFrontendProvider } from "../provider/providerContext";
 import Transfer from "./Transfer";
+import type { AccountDeploymentData } from "@starknet-io/get-starknet-core";
 
 export default function DeployAccount() {
   const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
@@ -27,7 +28,7 @@ export default function DeployAccount() {
 
   async function paymasterDeployAccount(gasTokenAddress: string) {
     console.log("deploying...");
-    const deploymentData = await wallet.deploymentData(StarknetWalletObject!);
+    const deploymentData: AccountDeploymentData = await wallet.deploymentData(StarknetWalletObject!);
     console.log("deploymentData in deploy =", deploymentData);
     if (!deploymentData) {
       console.log("No deployment data found");
@@ -151,7 +152,7 @@ export default function DeployAccount() {
           <Box w={200}  >
             <Center>
               <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
-                Choose fees:<br></br>
+                Choose fees to deploy:<br></br>
               </Text>
             </Center>
             {isFeesAvailable ? (<>

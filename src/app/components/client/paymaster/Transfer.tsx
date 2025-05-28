@@ -40,12 +40,10 @@ export default function Transfer() {
 
   async function sendToken(gasTokenAddress: string) {
     console.log("sending...");
-    const res = await myWalletAccount!.execute(callSendUSDC, {
-      paymaster: {
-        feeMode: { mode: "default", gasToken: gasTokenAddress }
-        // feeMode:{mode:"sponsored"}
-      }
-    });
+    const res = await myWalletAccount!.executePaymasterTransaction([callSendUSDC],
+      {
+          feeMode: { mode: 'default', gasToken: gasTokenAddress },
+      });
     console.log("Sent.");
     console.log("res=", res);
     setTxH(res.transaction_hash);

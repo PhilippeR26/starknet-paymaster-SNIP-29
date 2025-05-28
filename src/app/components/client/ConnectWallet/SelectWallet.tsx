@@ -65,6 +65,7 @@ export default function SelectWallet() {
             const addr = validateAndParseAddress(result[0]);
             setAddressAccount(addr); // zustand
         }
+        console.log("SWO name=", selectedWallet.name);
         const isConnectedWallet: boolean = await wallet.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
         setConnected(isConnectedWallet); // zustand
         if (isConnectedWallet) {
