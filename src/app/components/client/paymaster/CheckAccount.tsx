@@ -149,28 +149,15 @@ export default function CheckAccount() {
                 <Transfer></Transfer>
               </>
             ) : (
-              ((StarknetWalletObject !== undefined) && (StarknetWalletObject.name === "Braavos")) ? (
-                <>
-                  <Center fontSize='lg' color='red.500'>
-                    Current account not deployed.</Center>
-                    <Center fontSize='lg' color='red.500'>
-                    Braavos account can't be deployed by paymaster SNIP-29!
-                  </Center>
-                </>
-              ) : (
-                <>
-                  <Center fontSize='lg' color='red.500'>
-                    Account is not deployed!
-                  </Center>
-                  <DeployAccount></DeployAccount>
-                </>
-              )
+              <>
+                <Center fontSize='lg' color='red.500'>
+                  Account is not deployed!
+                </Center>
+                <DeployAccount></DeployAccount>
+              </>
             )
-
-
           )
         )
-
         }
       </>)
       }
