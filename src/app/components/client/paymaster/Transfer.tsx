@@ -11,7 +11,7 @@ import GetBalance from "../Contract/GetBalance";
 import { useEffect, useRef, useState } from "react";
 import { erc20Abi } from "../../../contracts/abis/ERC20abi"
 import { useFrontendProvider } from "../provider/providerContext";
-import { buildFee } from "./buildFee";
+import { buildFee, buildNativeFee } from "./buildFee";
 import TransactionStatus from "../Transaction/TransactionStatus";
 import { useGlobalContext } from "@/app/globalContext";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
@@ -22,6 +22,7 @@ export default function Transfer() {
 
   const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [nativeFees, setNativeFees] = useState<string>("-");
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
   const myProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
   const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
@@ -38,15 +39,26 @@ export default function Transfer() {
       amount: UsdcAmount,
     });
 
-  async function sendToken(gasTokenAddress: string) {
+  async function sendToken(tokenNumber: string) {
     console.log("sending...");
-    const res = await myWalletAccount!.executePaymasterTransaction([callSendUSDC],
-      {
+    // native STRK fees
+    if (tokenNumber === "0") {
+      const res = await myWalletAccount!.execute([callSendUSDC]);
+      console.log("Sent with native fees.");
+      console.log("res=", res);
+      setTxH(res.transaction_hash);
+    } else {
+      // SNIP-29 tx
+      const gasTokenAddress = answersFees[Number(selectedToken!) - 1].tokenData.address
+
+      const res = await myWalletAccount!.executePaymasterTransaction([callSendUSDC],
+        {
           feeMode: { mode: 'default', gasToken: gasTokenAddress },
-      });
-    console.log("Sent.");
-    console.log("res=", res);
-    setTxH(res.transaction_hash);
+        });
+      console.log("Sent with paymaster.");
+      console.log("res=", res);
+      setTxH(res.transaction_hash);
+    }
   }
 
   function scroll() {
@@ -59,6 +71,18 @@ export default function Transfer() {
         })
     }
   }
+
+  // get fees for a native transaction
+  useEffect(() => {
+    const getNativeFees = async () => {
+      const nativeFees = await myWalletAccount?.estimateInvokeFee(callSendUSDC);
+      console.log("nativeFees =", nativeFees);
+      setNativeFees(buildNativeFee(nativeFees?.suggestedMaxFee));
+    }
+    getNativeFees();
+  }
+    , [myWalletAccount]
+  );
 
   // get list of fee tokens
   useEffect(() => {
@@ -232,17 +256,32 @@ export default function Transfer() {
                         size={"sm"}
                       >
                         <Stack>
+                          <RadioGroup.Item
+                            key={0}
+                            value={"0"}
+                            pl={5}
+                          >
+                            <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
+                            <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
+                            <RadioGroup.ItemText
+                            >
+                              {
+                                nativeFees
+                              }
+
+                            </RadioGroup.ItemText>
+                          </RadioGroup.Item>
                           {answersFees.map((token: DataForFeesList, index: number) => (
                             <RadioGroup.Item
-                              key={index}
-                              value={index.toString()}
+                              key={index + 1}
+                              value={(index + 1).toString()}
                               pl={5}
                             >
                               <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
                               <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
                               <RadioGroup.ItemText
                               >
-                                {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
+                                {buildFee(token.feeData, token.tokenData.symbol, token.tokenData.decimals)}
 
                               </RadioGroup.ItemText>
                             </RadioGroup.Item>
@@ -273,8 +312,8 @@ export default function Transfer() {
                     onClick={async () => {
                       setTxH("");
                       setTxResult(false);
-                      sendToken(
-                        answersFees[Number(selectedToken!)].tokenData.address);
+                      sendToken(selectedToken!
+                      );
                     }}
                   >
                     Proceed...

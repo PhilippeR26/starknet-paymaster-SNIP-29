@@ -1,3 +1,4 @@
+// display only 6 decimals
 export function formatBalance(qty: bigint, decimals: number): string {
     const balance = String("0").repeat(decimals) + qty.toString();
     const rightCleaned = balance.slice(-decimals).replace(/(\d)0+$/gm, '$1');

@@ -174,8 +174,7 @@ export default function DeployAccount() {
                       <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
                       <RadioGroup.ItemText
                       >
-                        {buildFee(token.tokenData.address, token.feeData, myProviderIndex, token.tokenData.symbol, token.tokenData.decimals)}
-
+                        {buildFee(token.feeData, token.tokenData.symbol, token.tokenData.decimals)}
                       </RadioGroup.ItemText>
                     </RadioGroup.Item>
                   ))}
