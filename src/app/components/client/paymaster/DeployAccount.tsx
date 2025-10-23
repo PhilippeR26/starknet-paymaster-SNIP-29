@@ -19,7 +19,7 @@ export default function DeployAccount() {
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
   const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
   const { txResult, setTxResult } = useGlobalContext(state => state);
-   const [goToTransfer, setGotoTransfer]  = useState<boolean>(false);
+  const [goToTransfer, setGotoTransfer] = useState<boolean>(false);
   const { isReadyToTransfer, setIsReadyToTransfer } = useGlobalContext(state => state);
   const [txH, setTxH] = useState<string>("");
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
@@ -92,7 +92,11 @@ export default function DeployAccount() {
       const symbols: string[] = await Promise.all(
         tokens.map(
           async (tokenData: TokenData): Promise<string> => {
-            const contract = new Contract(erc20Abi, tokenData.token_address, myWalletAccount);
+            const contract = new Contract({
+              abi: erc20Abi,
+              address: tokenData.token_address,
+              providerOrAccount: myWalletAccount
+            });
             return (
               shortString.decodeShortString(await contract.symbol())
             )
@@ -138,108 +142,108 @@ export default function DeployAccount() {
 
 
   return (<>
-  { !goToTransfer ? (
-    <Box ref={scrollRef}>
-      <Center>
-        <Group
-          pb={3}
-          pt={2}
-          bg={"lightslategray"}
-          borderRadius={10}
-          mt={8}
-          mb={2}
-        >
-          <Box w={200}  >
-            <Center>
-              <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
-                Choose fees to deploy:<br></br>
-              </Text>
-            </Center>
-            {isFeesAvailable ? (<>
-              <RadioGroup.Root
-                defaultValue={"0"}
-                value={selectedToken}
-                onValueChange={(e) => setSelectedToken(e.value)}
-                colorPalette={"black"}
-                size={"sm"}
-              >
-                <Stack>
-                  {answersFees.map((token: DataForFeesList, index: number) => (
-                    <RadioGroup.Item
-                      key={index}
-                      value={index.toString()}
-                      pl={5}
-                    >
-                      <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
-                      <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
-                      <RadioGroup.ItemText
+    {!goToTransfer ? (
+      <Box ref={scrollRef}>
+        <Center>
+          <Group
+            pb={3}
+            pt={2}
+            bg={"lightslategray"}
+            borderRadius={10}
+            mt={8}
+            mb={2}
+          >
+            <Box w={200}  >
+              <Center>
+                <Text textDecoration={"underline"} fontSize={16} fontWeight={"bold"}>
+                  Choose fees to deploy:<br></br>
+                </Text>
+              </Center>
+              {isFeesAvailable ? (<>
+                <RadioGroup.Root
+                  defaultValue={"0"}
+                  value={selectedToken}
+                  onValueChange={(e) => setSelectedToken(e.value)}
+                  colorPalette={"black"}
+                  size={"sm"}
+                >
+                  <Stack>
+                    {answersFees.map((token: DataForFeesList, index: number) => (
+                      <RadioGroup.Item
+                        key={index}
+                        value={index.toString()}
+                        pl={5}
                       >
-                        {buildFee(token.feeData, token.tokenData.symbol, token.tokenData.decimals)}
-                      </RadioGroup.ItemText>
-                    </RadioGroup.Item>
-                  ))}
-                </Stack>
-              </RadioGroup.Root>
-            </>
-            ) : (
-              <>
-                <Center>
-                  <Spinner size="xl" color="blue.solid" />
-                </Center>
+                        <RadioGroup.ItemHiddenInput></RadioGroup.ItemHiddenInput>
+                        <RadioGroup.ItemIndicator></RadioGroup.ItemIndicator>
+                        <RadioGroup.ItemText
+                        >
+                          {buildFee(token.feeData, token.tokenData.symbol, token.tokenData.decimals)}
+                        </RadioGroup.ItemText>
+                      </RadioGroup.Item>
+                    ))}
+                  </Stack>
+                </RadioGroup.Root>
               </>
-            )
-            }
-            <Center>
+              ) : (
+                <>
+                  <Center>
+                    <Spinner size="xl" color="blue.solid" />
+                  </Center>
+                </>
+              )
+              }
+              <Center>
+                <Button
+                  variant="surface"
+                  fontWeight='bold'
+                  mt={3}
+                  px={5}
+                  hidden={selectedToken === null}
+                  onClick={async () => {
+                    setTxH("");
+                    setTxResult(false);
+                    paymasterDeployAccount(
+                      answersFees[Number(selectedToken!)].tokenData.address);
+                  }}
+                >
+                  Deploy account...
+                </Button>
+              </Center>
+            </Box>
+
+          </Group>
+
+        </Center>
+        {txH !== "" ?
+          (
+            <>
+              <TransactionStatus transactionHash={txH}></TransactionStatus>
               <Button
                 variant="surface"
                 fontWeight='bold'
                 mt={3}
                 px={5}
-                hidden={selectedToken === null}
-                onClick={async () => {
-                  setTxH("");
-                  setTxResult(false);
-                  paymasterDeployAccount(
-                    answersFees[Number(selectedToken!)].tokenData.address);
-                }}
-              >
-                Deploy account...
-              </Button>
-            </Center>
-          </Box>
-
-        </Group>
-
-      </Center>
-      {txH !== "" ?
-        (
-          <>
-            <TransactionStatus transactionHash={txH}></TransactionStatus>
-            <Button
-              variant="surface"
-              fontWeight='bold'
-              mt={3}
-              px={5}
-              hidden={!isReadyToTransfer}
-              onClick={
-                () => {
-                  setGotoTransfer(true);
+                hidden={!isReadyToTransfer}
+                onClick={
+                  () => {
+                    setGotoTransfer(true);
+                  }
                 }
-              }
-            >
-              Prepare Transfer...
-            </Button>
-          </>
-        ) : (
-          <Text><br></br>
-            <br></br>
-            <br></br></Text>
-        )
-      }
-    </Box>
-  ):(
-    <Transfer></Transfer>
-  )}
-    
+              >
+                Prepare Transfer...
+              </Button>
+            </>
+          ) : (
+            <Text><br></br>
+              <br></br>
+              <br></br></Text>
+          )
+        }
+      </Box>
+    ) : (
+      <Transfer></Transfer>
+    )}
+
   </>)
 }

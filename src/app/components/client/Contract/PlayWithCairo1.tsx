@@ -25,7 +25,11 @@ export default function PlayWithCairo1() {
     const [transactionHash, setTransactionHash] = useState<string>("");
     const [_transactionResult, setTransactionResult] = useState<GetTransactionReceiptResponse | undefined>(undefined);
 
-    const [cairo1Contract, _setcairo1Contract] = useState<Contract>(new Contract(test1Abi, contractAddress, walletAccountFromContext));
+    const [cairo1Contract, _setcairo1Contract] = useState<Contract>(new Contract({
+        abi: test1Abi,
+        address: contractAddress,
+        providerOrAccount: walletAccountFromContext
+    }));
 
     async function increaseBalance() {
         console.log("increase-Cairo1ReadContract=", cairo1Contract.functions);

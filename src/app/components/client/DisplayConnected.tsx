@@ -55,10 +55,6 @@ export function DisplayConnected() {
                         </Button>
                     </Center>
                     <br />
-                    {/* <WalletDisplay walletData={stateWallet} ></WalletDisplay>
-                    <DisplayBlockChain ></DisplayBlockChain>
-                    <DisplayEvents></DisplayEvents>
-                    <PlayWithCairo1></PlayWithCairo1> */}
                     <TrackBlocks></TrackBlocks>
                     <CheckAccount></CheckAccount>
                 </>

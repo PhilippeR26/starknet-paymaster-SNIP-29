@@ -32,7 +32,11 @@ export default function Transfer() {
   const [isAccountFunded, setIsAccountFunded] = useState<boolean>(false);
 
 
-  const UsdcContract = new Contract(erc20Abi, addrUSDCtestnet, myWalletAccount);
+  const UsdcContract = new Contract({
+    abi: erc20Abi,
+    address: addrUSDCtestnet,
+    providerOrAccount: myWalletAccount
+  });
   const callSendUSDC = UsdcContract.populate("transfer",
     {
       recipient: targetAccountAddress,
@@ -77,7 +81,7 @@ export default function Transfer() {
     const getNativeFees = async () => {
       const nativeFees = await myWalletAccount?.estimateInvokeFee(callSendUSDC);
       console.log("nativeFees =", nativeFees);
-      setNativeFees(buildNativeFee(nativeFees?.suggestedMaxFee));
+      setNativeFees(buildNativeFee(nativeFees?.overall_fee));
     }
     getNativeFees();
   }
@@ -122,7 +126,11 @@ export default function Transfer() {
         tokens.map(
           async (tokenData: TokenData): Promise<string> => {
 
-            const contract = new Contract(erc20Abi, tokenData.token_address, myWalletAccount);
+            const contract = new Contract({
+              abi: erc20Abi,
+              address: tokenData.token_address,
+              providerOrAccount: myWalletAccount
+            });
 
             return (
               shortString.decodeShortString(await contract.symbol())

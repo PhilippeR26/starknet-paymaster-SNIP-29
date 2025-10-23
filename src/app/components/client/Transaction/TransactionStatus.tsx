@@ -35,15 +35,15 @@ export default function TransactionStatus({ transactionHash }: Props) {
                 console.log("TxStatus =", txR.statusReceipt);
                 let finality: string = "";
                 txR.match({
-                    success: (txR: SuccessfulTransactionReceiptResponse) => {
+                    SUCCEEDED: (txR: SuccessfulTransactionReceiptResponse) => {
                         setTxResult(true);
                         finality = txR.finality_status;
                     },
-                    reverted: (txR: RevertedTransactionReceiptResponse) => {
+                    REVERTED: (txR: RevertedTransactionReceiptResponse) => {
                         setTxResult(true);
                         finality = txR.finality_status;
                     },
-                    error: (err: Error) => {
+                    ERROR: (err: Error) => {
                         setTxResult(true);
                         finality = err.message;
                     },

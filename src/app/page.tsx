@@ -15,8 +15,8 @@ export default async function Page() {
                 <p className={styles.bgText}>
                     Demo SNIP-29 paymaster
                 </p>
-                   <Center> 
-                     get-starknet v4.0.7 with starknet.js v7.5.1
+                   <Center>
+                     get-starknet v4.0.7 with starknet.js v8.6.0
                 </Center>
                 <Center>
                     <Image src={starknetjsImg} alt='starknet.js' width={150} />
