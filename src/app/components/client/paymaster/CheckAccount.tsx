@@ -14,7 +14,7 @@ export default function CheckAccount() {
   const [isProcessing, setProcessing] = useState<boolean>(true);
   const { isReadyToTransfer: transferRequested, setIsReadyToTransfer: setTransferRequested } = useGlobalContext(state => state);
 
-  const isValidNetwork = chain === constants.StarknetChainId.SN_SEPOLIA ? true : false;
+  const isValidNetwork = chain === constants.StarknetChainId.SN_MAIN ? true : false;
 
 
 
@@ -37,9 +37,10 @@ export default function CheckAccount() {
         const res = await myWalletAccount?.callContract(myCall);
         console.log("supports_interface =", res);
         _isDeployed = true;
-      } catch {
+      } catch (_err: any) {
         _isDeployed = false;
-        console.log("Account not deployed");
+        console.log("Account not deployed. Err=", _err);
+
       }
       //  console.log("getSnip9Version",await myWalletAccount?.getSnip9Version());
       const _isSnip9 = await myWalletAccount?.getSnip9Version() !== OutsideExecutionVersion.UNSUPPORTED;
@@ -116,7 +117,7 @@ export default function CheckAccount() {
       {!isValidNetwork ? (
         <Center>
           <p style={{ color: "red" }}>
-            Please connect to Sepolia Testnet network
+            Please connect to Mainnet network
           </p>
         </Center>
       ) : (<>

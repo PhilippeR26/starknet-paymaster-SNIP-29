@@ -6,7 +6,7 @@ import purseRight from "../../../public/Images/purse.png";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish, OutsideExecutionVersion, type Call } from "starknet";
 import { smallAddress } from "@/app/utils/smallAddress";
-import { addrETH, addrSTRK, addrSWAY, addrUSDCtestnet, targetAccountAddress } from "@/app/utils/constants";
+import { addrETH, addrSTRK, USDCaddress, targetAccountAddress } from "@/app/utils/constants";
 import GetBalance from "../Contract/GetBalance";
 import { useEffect, useRef, useState } from "react";
 import { erc20Abi } from "../../../contracts/abis/ERC20abi"
@@ -34,7 +34,7 @@ export default function Transfer() {
 
   const UsdcContract = new Contract({
     abi: erc20Abi,
-    address: addrUSDCtestnet,
+    address: USDCaddress,
     providerOrAccount: myWalletAccount
   });
   const callSendUSDC = UsdcContract.populate("transfer",
@@ -212,8 +212,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
-                <GetBalance tokenAddress={addrUSDCtestnet} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
-                <GetBalance tokenAddress={addrSWAY} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
+                <GetBalance tokenAddress={USDCaddress} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
               </VStack>
             </VStack>
             <Center w={200}>
@@ -228,8 +227,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={targetAccountAddress}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={targetAccountAddress}></GetBalance>
-                <GetBalance tokenAddress={addrUSDCtestnet} accountAddress={targetAccountAddress}></GetBalance>
-                <GetBalance tokenAddress={addrSWAY} accountAddress={targetAccountAddress}></GetBalance>
+                <GetBalance tokenAddress={USDCaddress} accountAddress={targetAccountAddress}></GetBalance>
               </VStack>
             </VStack>
           </HStack>

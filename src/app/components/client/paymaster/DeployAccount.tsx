@@ -5,9 +5,6 @@ import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, walle
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Box, Button, Center, Group, HStack, RadioGroup, Spinner, Stack, VStack, Text } from "@chakra-ui/react";
 import { useGlobalContext } from "@/app/globalContext";
-import type { addrSTRK, addrETH, addrUSDCtestnet, addrSWAY, targetAccountAddress } from "@/app/utils/constants";
-import type { smallAddress } from "@/app/utils/smallAddress";
-import GetBalance from "../Contract/GetBalance";
 import TransactionStatus from "../Transaction/TransactionStatus";
 import { buildFee } from "./buildFee";
 import { useFrontendProvider } from "../provider/providerContext";

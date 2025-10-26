@@ -4,7 +4,7 @@ import { useStoreWallet } from './walletContext';
 import { Button } from "@chakra-ui/react";
 import { connect } from '@starknet-io/get-starknet';
 import { WALLET_API } from '@starknet-io/types-js';
-import { validateAndParseAddress, wallet, WalletAccount, constants as SNconstants, PaymasterRpc } from 'starknet';
+import { validateAndParseAddress, wallet, WalletAccount, constants as SNconstants, PaymasterRpc, constants } from 'starknet';
 import { myFrontendProviders } from '@/app/utils/constants';
 import { useFrontendProvider } from '../provider/providerContext';
 import WrongWallet from './WrongWallet';
@@ -43,8 +43,8 @@ export default function SelectWallet() {
         try {
             await myWalletSWO.request({ type: "wallet_supportedSpecs" });
             isCompatible = true;
-        } catch {
-            (_err: any) => { console.log("Wallet compatibility failed.") };
+        } catch (error: unknown) {
+             console.log("Wallet compatibility failed.", error) ;
         }
         return isCompatible;
     }
@@ -52,8 +52,8 @@ export default function SelectWallet() {
     const handleSelectedWallet = async (selectedWallet: WALLET_API.StarknetWindowObject) => {
         console.log("Trying to connect wallet=", selectedWallet);
         setMyWallet(selectedWallet); // zustand
-        const paymasterRpc = new PaymasterRpc({ default: true });
-        setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[2], selectedWallet,undefined, paymasterRpc));
+        const paymasterRpc = new PaymasterRpc({ nodeUrl: constants.NetworkName.SN_MAIN });
+        setMyWalletAccount(await WalletAccount.connect(myFrontendProviders[0], selectedWallet,undefined, paymasterRpc));
 
         const result = await wallet.requestAccounts(selectedWallet);
         if (typeof (result) == "string") {
