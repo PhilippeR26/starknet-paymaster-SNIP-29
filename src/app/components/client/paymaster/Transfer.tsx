@@ -1,12 +1,12 @@
-import { Box, Center, HStack, RadioGroup, VStack, Text, Button, Grid, GridItem, Group, Stack, Spinner } from "@chakra-ui/react";
+import { Box, Center, HStack, RadioGroup, VStack, Text, Button, Group, Stack, Spinner } from "@chakra-ui/react";
 import Image from 'next/image'
 import purseLeft from "../../../public/Images/purse-wallet.svg";
 import arrow from "../../../public/Images/right-arrow.svg";
 import purseRight from "../../../public/Images/purse.png";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
-import { constants, Contract, num, shortString, PaymasterRpc, type TokenData, type PaymasterFeeEstimate, type PreparedTransaction, type BigNumberish, OutsideExecutionVersion, type Call } from "starknet";
+import { Contract, type TokenData, type PaymasterFeeEstimate, CairoBytes31, num } from "starknet";
 import { smallAddress } from "@/app/utils/smallAddress";
-import { addrETH, addrSTRK, USDCaddress, targetAccountAddress } from "@/app/utils/constants";
+import { addrETH, addrSTRK, targetAccountAddress, USDCircleAddressMainnet } from "@/app/utils/constants";
 import GetBalance from "../Contract/GetBalance";
 import { useEffect, useRef, useState } from "react";
 import { erc20Abi } from "../../../contracts/abis/ERC20abi"
@@ -15,18 +15,18 @@ import { buildFee, buildNativeFee } from "./buildFee";
 import TransactionStatus from "../Transaction/TransactionStatus";
 import { useGlobalContext } from "@/app/globalContext";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
+import { USDCircleAbi } from "@/app/contracts/abis/USDCircleAbi";
 
 
 export default function Transfer() {
   const UsdcAmount = 1n * 10n ** 5n;
 
-  const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
+  const { myWalletAccount } = useStoreWallet(state => state);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [nativeFees, setNativeFees] = useState<string>("-");
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
-  const myProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
   const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
-  const { txResult, setTxResult } = useGlobalContext(state => state);
+  const { txResult, setTxResult } = useGlobalContext();
   const [txH, setTxH] = useState<string>("");
   const scrollRef = useRef<null | HTMLDivElement>(null);
   const [isAccountFunded, setIsAccountFunded] = useState<boolean>(false);
@@ -34,7 +34,7 @@ export default function Transfer() {
 
   const UsdcContract = new Contract({
     abi: erc20Abi,
-    address: USDCaddress,
+    address: USDCircleAddressMainnet,
     providerOrAccount: myWalletAccount
   });
   const callSendUSDC = UsdcContract.populate("transfer",
@@ -91,15 +91,16 @@ export default function Transfer() {
   // get list of fee tokens
   useEffect(() => {
     const getTokenList = async () => {
+      console.log("getTokenList start...");
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
       console.log("tokens =", tokens);
 
       const fees: EstimatePaymasterFeesResponse[] = await Promise.all(
         tokens.map(
-          async (tokenData: TokenData): Promise<EstimatePaymasterFeesResponse> => {
+          async (tokenData: TokenData, index: number): Promise<EstimatePaymasterFeesResponse> => {
 
             try {
-              const build = (await myWalletAccount?.paymaster.buildTransaction({
+              const estimation: PaymasterFeeEstimate = (await myWalletAccount?.paymaster.buildTransaction({
                 type: 'invoke',
                 invoke: {
                   userAddress: myWalletAccount?.address ? myWalletAccount.address : "",
@@ -110,10 +111,12 @@ export default function Transfer() {
                 feeMode: { mode: 'default', gasToken: tokenData.token_address },
                 // timeBounds?: PaymasterTimeBounds;
               }))!.fee;
-              return build;
+              console.log(index, "fee is", estimation);
+              return estimation;
 
             } catch {
               // not enough of this token to pay fees
+              console.log(index, "is not funded.");
               return undefined;
             }
           }
@@ -122,19 +125,43 @@ export default function Transfer() {
 
       console.log("fees=", fees)
 
-      const symbols: string[] = await Promise.all(
+      const symbols: (string | undefined)[] = await Promise.all(
         tokens.map(
-          async (tokenData: TokenData): Promise<string> => {
+          async (tokenData: TokenData, index: number): Promise<string | undefined> => {
+            if (fees[index] !== undefined) {
+              const contract = new Contract({
+                abi: erc20Abi,
+                address: tokenData.token_address,
+                providerOrAccount: myWalletAccount
+              });
+              try {
+                let symbol: string;
+                symbol = num.toHex(await contract.symbol()); // try abi with a felt response
+                console.log(index, ": symbol for", contract.address, "is", symbol);
+                if (symbol === "0x0") { // try abi with ByteArray response
+                  console.log(index, ":try with ByteArray response...");
+                  const contract2 = new Contract({
+                    abi: USDCircleAbi,
+                    address: tokenData.token_address,
+                    providerOrAccount: myWalletAccount
+                  });
+                  symbol = await contract2.symbol();
+                  console.log(index, ": symbol for", contract.address, " (ByteArray) is", symbol);
+                } else{
+                  symbol =new CairoBytes31(symbol).decodeUtf8();
+                  if (symbol==="USDC") {symbol="USDC.e"}
+                }
+                return (symbol);
+              } catch (err: any) {
+                console.log(index, ": symbol for", contract.address, "failed:", err);
+                return undefined
+              }
+            }
+            else {
+              console.log("index", index, "is not funded!");
 
-            const contract = new Contract({
-              abi: erc20Abi,
-              address: tokenData.token_address,
-              providerOrAccount: myWalletAccount
-            });
-
-            return (
-              shortString.decodeShortString(await contract.symbol())
-            )
+              return undefined
+            }
           }
         )
       );
@@ -149,7 +176,7 @@ export default function Transfer() {
           return {
             feeData: fee,
             tokenData: {
-              symbol: symbols[index],
+              symbol: symbols[index] as string,
               address: tokens[index].token_address,
               decimals: tokens[index].decimals
             }
@@ -212,7 +239,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
-                <GetBalance tokenAddress={USDCaddress} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
+                <GetBalance tokenAddress={USDCircleAddressMainnet} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
               </VStack>
             </VStack>
             <Center w={200}>
@@ -227,7 +254,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={targetAccountAddress}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={targetAccountAddress}></GetBalance>
-                <GetBalance tokenAddress={USDCaddress} accountAddress={targetAccountAddress}></GetBalance>
+                <GetBalance tokenAddress={USDCircleAddressMainnet} accountAddress={targetAccountAddress}></GetBalance>
               </VStack>
             </VStack>
           </HStack>
@@ -243,7 +270,7 @@ export default function Transfer() {
               mb={2}
             >
               <Center w={150} fontWeight={"bold"} fontSize={16}>
-                Send 0.1 USDC
+                Send 0.1 USDC (circle)
               </Center>
               <Box w={200}  >
                 <Center>
@@ -327,13 +354,13 @@ export default function Transfer() {
                 </Center>
               </Box>
               <Center w={150} fontWeight={"bold"} fontSize={16}>
-                Receive 0.1 USDC
+                Receive 0.1 USDC (Circle)
               </Center>
             </Group>
           </Center>
         ) : (
           <Center fontSize='lg' color='red.500' pt={6}>
-            Account needs to be funded with at least 0.1 USDC
+            Account needs to be funded with at least 0.1 USDC (Circle)
           </Center>
         )
         }

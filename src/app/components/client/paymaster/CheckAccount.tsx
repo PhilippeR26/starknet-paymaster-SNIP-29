@@ -8,7 +8,7 @@ import { useGlobalContext } from "@/app/globalContext";
 
 
 export default function CheckAccount() {
-  const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
+  const { chain, myWalletAccount } = useStoreWallet(state => state);
   const [isDeployed, setIsDeployed] = useState<boolean>(false);
   const [isSNIP9, setIsSNIP9] = useState<boolean>(false);
   const [isProcessing, setProcessing] = useState<boolean>(true);
