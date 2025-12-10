@@ -14,7 +14,7 @@ export default function CheckAccount() {
   const [isProcessing, setProcessing] = useState<boolean>(true);
   const { isReadyToTransfer: transferRequested, setIsReadyToTransfer: setTransferRequested } = useGlobalContext(state => state);
 
-  const isValidNetwork = chain === constants.StarknetChainId.SN_MAIN ? true : false;
+  const isValidNetwork = chain === constants.StarknetChainId.SN_SEPOLIA ? true : false;
 
 
 
@@ -117,7 +117,7 @@ export default function CheckAccount() {
       {!isValidNetwork ? (
         <Center>
           <p style={{ color: "red" }}>
-            Please connect to Mainnet network
+            Please connect to Testnet network
           </p>
         </Center>
       ) : (<>

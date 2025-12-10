@@ -32,7 +32,7 @@ export default async function Page() {
                 textAlign={"center"}
                 pt={2}
             >
-                Please connect to Mainnet network
+                Please connect to Testnet network
             </Text>
             <div>
                 <DisplayConnected></DisplayConnected>

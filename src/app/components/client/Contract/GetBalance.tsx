@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Contract, shortString, validateAndParseAddress } from "starknet";
+import { CairoBytes31, Contract, num, shortString, validateAndParseAddress } from "starknet";
 
 import { useStoreBlock } from "../Block/blockContext";
 
@@ -9,27 +9,28 @@ import { Text, Center, Spinner, } from "@chakra-ui/react";
 import styles from '../../../page.module.css'
 
 import { erc20Abi } from "../../../contracts/abis/ERC20abi"
-import { useStoreWallet } from "../ConnectWallet/walletContext";import { useFrontendProvider } from '../provider/providerContext';
+import { useStoreWallet } from "../ConnectWallet/walletContext"; import { useFrontendProvider } from '../provider/providerContext';
 import { myFrontendProviders } from '@/app/utils/constants';
+import { USDCircleAbi } from '@/app/contracts/abis/USDCircleAbi';
 ;
 
 type Props = { tokenAddress: string, accountAddress: string };
 
 export default function GetBalance({ tokenAddress, accountAddress }: Props) {
-    
+
     // block context
     const blockFromContext = useStoreBlock(state => state.dataBlock);
-    
-   
-    const myProviderIndex= useFrontendProvider(state=>state.currentFrontendProviderIndex);
+
+
+    const myProviderIndex = useFrontendProvider(state => state.currentFrontendProviderIndex);
 
     const [balance, setBalance] = useState<string | undefined>(undefined);
     const [decimals, setDecimals] = useState<number>(18)
     const [symbol, setSymbol] = useState<string>("");
 
-    const myProvider=myFrontendProviders[myProviderIndex];
+    const myProvider = myFrontendProviders[myProviderIndex];
     const contract = new Contract({
-        abi:erc20Abi,
+        abi: erc20Abi,
         address: tokenAddress,
         providerOrAccount: myProvider
     });
@@ -42,13 +43,38 @@ export default function GetBalance({ tokenAddress, accountAddress }: Props) {
             })
             .catch((e: any) => { console.log("error getDecimals=", e) });
 
+        let symbol: string = "---";
         contract.symbol()
-            .then((resp: any) => {
-                const res2 = shortString.decodeShortString(resp);
-                console.log("resSymbol=", res2);
-                setSymbol(res2);
+            .then((res2: bigint) => {
+                symbol = num.toHex(res2);
+                console.log("resSymbol=", symbol);
+                if (symbol === "0x0") { // try abi with ByteArray response
+                    console.log("try with ByteArray response...");
+                    const contract2 = new Contract({
+                        abi: USDCircleAbi,
+                        address: tokenAddress,
+                        providerOrAccount: myProvider
+                    });
+                    contract2.symbol()
+                        .then((res3: string) => {
+                            symbol = res3;
+                            console.log("symbol for", contract.address, " (ByteArray) is", symbol);
+                            setSymbol(symbol);
+
+                        })
+                        .catch((e: any) => { console.log("error getSymbol (ByteArray)=", e) });
+                } else {
+                    symbol = new CairoBytes31(symbol).decodeUtf8();
+                    if (symbol === "USDC") { symbol = "USDC.e" }
+                    setSymbol(symbol);
+
+                }
             })
-            .catch((e: any) => { console.log("error getSymbol=", e) });
+            .catch((e: any) => {
+                console.log("error getSymbol (felt)=", e);
+            });
+        setSymbol(symbol);
+
     }
         , []);
 
@@ -58,19 +84,20 @@ export default function GetBalance({ tokenAddress, accountAddress }: Props) {
             .then((resp: any) => {
                 const res3 = Number(resp);
                 console.log("res3=", resp);
-                const value:number=res3 / Math.pow(10, decimals);
+                const value: number = res3 / Math.pow(10, decimals);
 
                 setBalance(value.toFixed(7));
             }
             )
             .catch((e: any) => { console.log("error balanceOf=", e) });
+
     }
-    , [blockFromContext.block_number, decimals, accountAddress]); // balance updated at each block
+        , [blockFromContext.block_number, decimals, accountAddress]); // balance updated at each block
 
     return (
         <>
             {
-                typeof balance=="undefined" ? (
+                typeof balance == "undefined" ? (
                     <>
                         <Center>
                             <Spinner color="blue" size="sm" mr={4} />  Fetching data ...

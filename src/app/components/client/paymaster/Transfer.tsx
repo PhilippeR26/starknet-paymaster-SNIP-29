@@ -6,7 +6,7 @@ import purseRight from "../../../public/Images/purse.png";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Contract, type TokenData, type PaymasterFeeEstimate, CairoBytes31, num } from "starknet";
 import { smallAddress } from "@/app/utils/smallAddress";
-import { addrETH, addrSTRK, targetAccountAddress, USDCircleAddressMainnet } from "@/app/utils/constants";
+import { addrETH, addrSTRK, targetAccountAddress,  USDCircleAddressTestnet } from "@/app/utils/constants";
 import GetBalance from "../Contract/GetBalance";
 import { useEffect, useRef, useState } from "react";
 import { erc20Abi } from "../../../contracts/abis/ERC20abi"
@@ -34,7 +34,7 @@ export default function Transfer() {
 
   const UsdcContract = new Contract({
     abi: erc20Abi,
-    address: USDCircleAddressMainnet,
+    address: USDCircleAddressTestnet,
     providerOrAccount: myWalletAccount
   });
   const callSendUSDC = UsdcContract.populate("transfer",
@@ -122,7 +122,6 @@ export default function Transfer() {
           }
         )
       );
-
       console.log("fees=", fees)
 
       const symbols: (string | undefined)[] = await Promise.all(
@@ -239,7 +238,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
-                <GetBalance tokenAddress={USDCircleAddressMainnet} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
+                <GetBalance tokenAddress={USDCircleAddressTestnet} accountAddress={myWalletAccount?.address ? myWalletAccount.address : ""}></GetBalance>
               </VStack>
             </VStack>
             <Center w={200}>
@@ -254,7 +253,7 @@ export default function Transfer() {
                 <GetBalance tokenAddress={addrSTRK} accountAddress={targetAccountAddress}>
                 </GetBalance>
                 <GetBalance tokenAddress={addrETH} accountAddress={targetAccountAddress}></GetBalance>
-                <GetBalance tokenAddress={USDCircleAddressMainnet} accountAddress={targetAccountAddress}></GetBalance>
+                <GetBalance tokenAddress={USDCircleAddressTestnet} accountAddress={targetAccountAddress}></GetBalance>
               </VStack>
             </VStack>
           </HStack>

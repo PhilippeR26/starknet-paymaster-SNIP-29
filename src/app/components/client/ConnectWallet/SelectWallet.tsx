@@ -44,9 +44,9 @@ export default function SelectWallet() {
 
         setConnected(true);
         setMyWallet(selectedWallet); // zustand
-        const paymasterRpc = new PaymasterRpc({ nodeUrl: constants.NetworkName.SN_MAIN });
+        const paymasterRpc = new PaymasterRpc({ nodeUrl: constants.NetworkName.SN_SEPOLIA });
         console.log("Trying to connect wallet=", selectedWallet);
-        setMyWalletAccount(await WalletAccountV5.connect(myFrontendProviders[0], selectedWallet, undefined, paymasterRpc));
+        setMyWalletAccount(await WalletAccountV5.connect(myFrontendProviders[2], selectedWallet, undefined, paymasterRpc));
 
         console.log("WalletAccountV5 created");
         const result = await walletV5.requestAccounts(selectedWallet);
