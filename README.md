@@ -17,7 +17,7 @@ It allows you to use several tokens to pay the Starknet fees: STRK, ETH, USDC, S
 
 > [!IMPORTANT]
 > In this demo, you need at least 0.1 USDC in your account to be able to execute a transfer.  
-> To get USDC in testnet, one way is to connect a Testnet account to: https://app.ekubo.org/?outputCurrency=USDC&amount=1&inputCurrency=STRK
+> To get USDC in testnet, one way is to use the faucet of Circle: https://faucet.circle.com/
 
 Analyze the code to see how to create a such DAPP (start [here](src/app/page.tsx))  
 
