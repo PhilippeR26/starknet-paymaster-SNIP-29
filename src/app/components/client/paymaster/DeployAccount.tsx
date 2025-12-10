@@ -1,21 +1,18 @@
 import { erc20Abi } from "@/app/contracts/abis/ERC20abi";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
 import { useEffect, useRef, useState } from "react";
-import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, wallet } from "starknet";
+import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, walletV5 } from "starknet";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Box, Button, Center, Group, HStack, RadioGroup, Spinner, Stack, VStack, Text } from "@chakra-ui/react";
 import { useGlobalContext } from "@/app/globalContext";
-import type { addrSTRK, addrETH, addrUSDCtestnet, addrSWAY, targetAccountAddress } from "@/app/utils/constants";
-import type { smallAddress } from "@/app/utils/smallAddress";
-import GetBalance from "../Contract/GetBalance";
 import TransactionStatus from "../Transaction/TransactionStatus";
 import { buildFee } from "./buildFee";
 import { useFrontendProvider } from "../provider/providerContext";
 import Transfer from "./Transfer";
-import type { AccountDeploymentData } from "@starknet-io/get-starknet-core";
+import type { AccountDeploymentData } from "@starknet-io/types-js";
 
 export default function DeployAccount() {
-  const { chain, myWalletAccount, StarknetWalletObject } = useStoreWallet(state => state);
+  const { chain, myWalletAccount, walletWSF } = useStoreWallet(state => state);
   const [answersFees, setAnswersFees] = useState<DataForFeesList[]>([]);
   const [isFeesAvailable, setFeesAvailable] = useState<boolean>(false);
   const { txResult, setTxResult } = useGlobalContext(state => state);
@@ -28,7 +25,7 @@ export default function DeployAccount() {
 
   async function paymasterDeployAccount(gasTokenAddress: string) {
     console.log("deploying...");
-    const deploymentData: AccountDeploymentData = await wallet.deploymentData(StarknetWalletObject!);
+    const deploymentData: AccountDeploymentData = await walletV5.deploymentData(walletWSF!);
     console.log("deploymentData in deploy =", deploymentData);
     if (!deploymentData) {
       console.log("No deployment data found");
@@ -56,7 +53,7 @@ export default function DeployAccount() {
     const getTokenList = async () => {
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
       console.log("tokens available for deploy =", tokens);
-      const deploymentData = await wallet.deploymentData(StarknetWalletObject!);
+      const deploymentData = await walletV5.deploymentData(walletWSF!);
       if (!deploymentData) {
         console.log("No deployment data found");
         return;
