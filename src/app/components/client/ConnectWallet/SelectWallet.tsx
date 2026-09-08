@@ -2,7 +2,7 @@
 
 import { Button, Dialog, StackSeparator, useDisclosure, VStack, Image } from "@chakra-ui/react";
 import { WALLET_API } from '@starknet-io/types-js';
-import { validateAndParseAddress, constants as SNconstants, WalletAccountV5, walletV5, json, PaymasterRpc, constants } from 'starknet';
+import { validateAndParseAddress, constants as SNconstants, WalletAccountV6, walletV6, json, PaymasterRpc, constants } from 'starknet';
 import { createStore, type Store } from "@starknet-io/get-starknet-discovery";
 import { isStarknetWallet, type WalletWithStarknetFeatures } from "@starknet-io/get-starknet-wallet-standard/features";
 import { myFrontendProviders } from '@/app/utils/constants';
@@ -37,7 +37,7 @@ export default function SelectWallet() {
         console.log("selected WalletWithStarknetFeatures=", selectedWallet);
         await selectedWallet.features["standard:connect"].connect({ silent: false });
         // Direct access to wallet features 
-        const chainId = (await walletV5.requestChainId(selectedWallet)) as string;
+        const chainId = (await walletV6.requestChainId(selectedWallet)) as string;
         // or
         // const chainId = await selectedWallet.features["starknet:walletApi"].request({ type: "wallet_requestChainId" });
         console.log("chainId=", chainId);
@@ -46,10 +46,10 @@ export default function SelectWallet() {
         setMyWallet(selectedWallet); // zustand
         const paymasterRpc = new PaymasterRpc({ nodeUrl: constants.NetworkName.SN_SEPOLIA });
         console.log("Trying to connect wallet=", selectedWallet);
-        setMyWalletAccount(await WalletAccountV5.connect(myFrontendProviders[2], selectedWallet, undefined, paymasterRpc));
+        setMyWalletAccount(await WalletAccountV6.connect(myFrontendProviders[2], selectedWallet, undefined, paymasterRpc));
 
         console.log("WalletAccountV5 created");
-        const result = await walletV5.requestAccounts(selectedWallet);
+        const result = await walletV6.requestAccounts(selectedWallet);
         if (typeof (result) == "string") {
             console.log("This Wallet is not compatible.");
             setSelectWalletUI(false);
@@ -60,16 +60,16 @@ export default function SelectWallet() {
             const addr = validateAndParseAddress(result[0]);
             setAddressAccount(addr); // zustand
         }
-        const isConnectedWallet: boolean = await walletV5.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
+        const isConnectedWallet: boolean = await walletV6.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
         setConnected(isConnectedWallet); // zustand
         if (isConnectedWallet) {
-            const chainId = (await walletV5.requestChainId(selectedWallet)) as string;
+            const chainId = (await walletV6.requestChainId(selectedWallet)) as string;
             setChain(chainId);
             setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
 
             console.log("change Provider index to :", myFrontendProviderIndex);
         }
-        setWalletApi(await walletV5.supportedSpecs(selectedWallet));
+        setWalletApi(await walletV6.supportedSpecs(selectedWallet));
         console.log("selected wallet =", json.stringify(selectedWallet));
         setSelectWalletUI(false);
     }

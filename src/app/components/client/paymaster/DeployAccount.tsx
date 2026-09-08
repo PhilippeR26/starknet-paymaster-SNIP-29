@@ -1,7 +1,7 @@
 import { erc20Abi } from "@/app/contracts/abis/ERC20abi";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
 import { useEffect, useRef, useState } from "react";
-import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, walletV5 } from "starknet";
+import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, walletV6 } from "starknet";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Box, Button, Center, Group, HStack, RadioGroup, Spinner, Stack, VStack, Text } from "@chakra-ui/react";
 import { useGlobalContext } from "@/app/globalContext";
@@ -25,7 +25,7 @@ export default function DeployAccount() {
 
   async function paymasterDeployAccount(gasTokenAddress: string) {
     console.log("deploying...");
-    const deploymentData: AccountDeploymentData = await walletV5.deploymentData(walletWSF!);
+    const deploymentData: AccountDeploymentData = await walletV6.deploymentData(walletWSF!);
     console.log("deploymentData in deploy =", deploymentData);
     if (!deploymentData) {
       console.log("No deployment data found");
@@ -53,7 +53,7 @@ export default function DeployAccount() {
     const getTokenList = async () => {
       const tokens: TokenData[] = (await myWalletAccount!.paymaster.getSupportedTokens()) as TokenData[];
       console.log("tokens available for deploy =", tokens);
-      const deploymentData = await walletV5.deploymentData(walletWSF!);
+      const deploymentData = await walletV6.deploymentData(walletWSF!);
       if (!deploymentData) {
         console.log("No deployment data found");
         return;

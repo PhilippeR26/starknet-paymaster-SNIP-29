@@ -19,7 +19,7 @@ export default async function Page() {
                 textStyle={"xl"}
                 textAlign={"center"}
             >
-                get-starknet v5.0.0 with starknet.js v9.1.0
+                get-starknet v6.0.5 with starknet.js v10.8.0
             </Text>
             <Center>
                 <Image

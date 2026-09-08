@@ -34,7 +34,7 @@ export default function CheckAccount() {
           calldata: [0]
         };
         console.log("myCall =", myCall);
-        const res = await myWalletAccount?.callContract(myCall);
+        const res = await myWalletAccount?.provider.callContract(myCall);
         console.log("supports_interface =", res);
         _isDeployed = true;
       } catch (_err: any) {
