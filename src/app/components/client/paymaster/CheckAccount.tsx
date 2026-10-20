@@ -1,4 +1,4 @@
-import { constants, OutsideExecutionVersion, shortString, type Call } from "starknet";
+import { constants, OutsideExecutionVersion, CairoBytes31, type Call } from "starknet";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { useEffect, useState } from "react";
 import Transfer from "./Transfer";
@@ -130,7 +130,7 @@ export default function CheckAccount() {
             isSNIP9 ? (
               <>
                 <Center>
-                  Network selected : {shortString.decodeShortString(chain)}
+                  Network selected : {new CairoBytes31(chain).decodeUtf8()}
                 </Center>
                 <Transfer></Transfer>
               </>
@@ -145,7 +145,7 @@ export default function CheckAccount() {
             transferRequested ? (
               <>
                 <Center>
-                  Network selected : {shortString.decodeShortString(chain)}
+                  Network selected : {new CairoBytes31(chain).decodeUtf8()}
                 </Center>
                 <Transfer></Transfer>
               </>

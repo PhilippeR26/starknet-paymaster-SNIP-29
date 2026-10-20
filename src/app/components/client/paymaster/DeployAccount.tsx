@@ -1,7 +1,7 @@
 import { erc20Abi } from "@/app/contracts/abis/ERC20abi";
 import type { DataForFeesList, EstimatePaymasterFeesResponse, TokenDataNecessary } from "@/app/type/types";
 import { useEffect, useRef, useState } from "react";
-import { type TokenData, Contract, shortString, type PaymasterFeeEstimate, walletV6 } from "starknet";
+import { type TokenData, Contract, CairoBytes31, num, type PaymasterFeeEstimate, walletV6 } from "starknet";
 import { useStoreWallet } from "../ConnectWallet/walletContext";
 import { Box, Button, Center, Group, HStack, RadioGroup, Spinner, Stack, VStack, Text } from "@chakra-ui/react";
 import { useGlobalContext } from "@/app/globalContext";
@@ -95,7 +95,7 @@ export default function DeployAccount() {
               providerOrAccount: myWalletAccount
             });
             return (
-              shortString.decodeShortString(await contract.symbol())
+              new CairoBytes31(num.toHex(await contract.symbol())).decodeUtf8()
             )
           }
         )

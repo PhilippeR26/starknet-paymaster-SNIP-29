@@ -3,16 +3,16 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.37.0",
     "@emotion/react": "^11.14.0",
-    "@starknet-io/get-starknet-discovery": "^6.0.4",
-    "@starknet-io/get-starknet-wallet-standard": "^6.0.5",
+    "@starknet-io/get-starknet-discovery": "^6.0.6",
+    "@starknet-io/get-starknet-wallet-standard": "^6.0.6",
     "@starknet-io/types-js": "0.10.3",
     "lucide-react": "^1.42.0",
     "next": "^16.3.4",
@@ -21,7 +21,7 @@
     "react-dom": "19.2.8",
     "react-icons": "^5.7.0",
     "sharp": "^0.35.4",
-    "starknet": "^10.7.3",
+    "starknet": "^11.4.1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

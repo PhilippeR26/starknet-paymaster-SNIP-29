@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import styles from '../../../page.module.css'
-import { shortString } from "starknet"
+import { CairoBytes31 } from "starknet"
 
 export interface StateWallet {
     addressAccount:string,
@@ -18,7 +18,7 @@ export default  function WalletDisplay( {walletData}:WalletProps) {
            <p className={styles.text1}>
            
                address = {walletData.addressAccount} <br />
-               chain = {shortString.decodeShortString(walletData.chainId)} <br /> 
+               chain = {new CairoBytes31(walletData.chainId).decodeUtf8()} <br /> 
                isConnected={walletData.isConnected ? "Yes" : "No"}<br />
            </p>
        </Box>
